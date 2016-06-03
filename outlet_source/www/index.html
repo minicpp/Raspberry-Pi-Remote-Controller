@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <title>D. LIU & D. HAN's Automatic Light Management</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="jquery/jquery.mobile-1.3.2.min.css" />
+	<script src="jquery/jquery.js"></script>
+	<script src="jquery/jquery.mobile-1.3.2.js"></script>
+</head>
+<body>
+
+<div data-role="page">
+	<div data-role="content">
+	<form>
+		<div data-role="collapsible" data-theme="b" data-content-theme="d">
+			<h4>Options</h4>
+			<label>Input Delay(Seconds):</label>
+			<label id="commandHMS"></label>
+			<input type="text" name="command" id="command" value="0">
+			<fieldset class="ui-grid-a">
+				<div class="ui-block-a"><input type="button" id="clear" data-theme="b" value="Clear"></div>
+				<div class="ui-block-b"><input type="button" id="update" data-theme="e" value="Update"></div>
+				<div class="ui-block-a"><input type="button" id="second5" value="+5 S"></div>
+				<div class="ui-block-b"><input type="button" id="second30" value="+30 S"></div>
+				<div class="ui-block-a"><input type="button" id="minute2" value="+2 M"></div>
+				<div class="ui-block-b"><input type="button" id="minute5" value="+5 M"></div>
+				<div class="ui-block-a"><input type="button" id="minute20" value="+20 M"></div>
+				<div class="ui-block-b"><input type="button" id="minute30" value="+30 M"></div>
+				<div class="ui-block-a"><input type="button" id="hour1" value="+1 H"></div>
+				<div class="ui-block-b"><input type="button" id="hour5" value="+5 H"></div>
+			</fieldset>
+		</div>
+		<div style="height:16px"> <img id="loading" src="ajax-loader.gif" alt="loading"> How are you doing?  </div>
+		<input id="touchme" type="button" data-theme="e" value="Touch me:)">
+		<input id="open1" type="button" value="Open 1">
+		<input id="close1" type="button" data-theme="a" value="Close 1">
+		<input id="open2"  type="button" value="Open 2">
+		<input id="close2" type="button" data-theme="a" value="Close 2">
+		<input id="open3" type="button" value="Open 3">
+		<input id="close3" type="button" data-theme="a" value="Close 3">
+
+		<div data-role="collapsible" data-theme="b" data-content-theme="d">
+			<h4> Advanced Options </h4>
+			<label for="textarea-debug">Debug Output:</label>
+			<textarea name="textarea-debug" style="height: 200px" id="textarea-debug"></textarea>
+			<fieldset class="ui-grid-a">
+				<div class="ui-block-a"><input type="text" name="pid" id="pid" value=""></div>
+				<div class="ui-block-b"><input type="button" id="kill" value="Kill"></div>
+			</fieldset>
+			<input type="button" id="listps" value="List Process">
+			<input type="button" id="reboot" value="Reboot Machine">
+		</div>
+
+	</form>
+	</div>
+</div>
+
+
+<script>
+$("#loading").hide();
+updateDateTimeLabel(new Date());
+
+
+/* Event of each light button  */
+$("#touchme").click(function (){
+	runBackEnd(0,0);
+});
+$("#open1").click(function (){
+	runBackEnd(0,1);
+});
+
+$("#close1").click(function (){
+	runBackEnd(0,2);
+});
+$("#open2").click(function (){
+	runBackEnd(0,3);
+});
+$("#close2").click(function (){
+	runBackEnd(0,4);
+});
+$("#open3").click(function (){
+	runBackEnd(0,5);
+});
+$("#close3").click(function (){
+	runBackEnd(0,6);
+});
+$("#listps").click(function (){
+	runBackEnd(1,0);
+});
+$("#kill").click(function (){
+	runBackEnd(2,0);
+});
+$("#reboot").click(function (){
+	runBackEnd(3,0);
+});
+
+
+
+/* The function sends parameters to backend of php*/
+function runBackEnd(op, channel){
+	/*op=0 light switch; op=1 list ps; op=2 kill ps; op=3 reboot*/
+	$("#loading").show();
+	var time = parseInt($("#command").val());
+	$("#command").val(0);
+	updateDateTimeLabel(new Date());
+	if(isNaN(time)) time = 0;
+	pid = 0;
+	if(op == 2){
+		pid = parseInt($("#pid").val());
+		if(isNaN(pid)) pid = 0;
+		$("#pid").val("");
+	}	
+	$.getJSON("backend.php?op="+op+"&time="+time+"&channel="+channel+"&pid="+pid,
+			function(data){
+		output_str ="";
+		$.each(data, function(key, val){
+			output_str += key + ":" + val;
+			output_str += '\n';
+		});
+		$("#textarea-debug").val(output_str);
+		$("#loading").hide();
+	})
+	.error(function(){ alert("Can not access server"); $("#loading").hide();});
+}
+
+/* The following are time definition functions */ 
+function updateDateTimeLabel(cdate){
+	$("#commandHMS").html("0:0:0"+
+		"&nbsp;&nbsp;("+ (cdate.getMonth()+1) + "/" +cdate.getDate()+"/"+cdate.getFullYear()+"@"+
+		cdate.getHours()+":"+cdate.getMinutes()+":"+cdate.getSeconds()  +")");
+}
+
+function addTimeToCommand(value){
+	var v=parseInt($("#command").val());
+	if(isNaN(v)) v = 0;
+	v += value;
+	$("#command").val(v);
+	var hour = 0;
+	var minute = 0;
+	var second = 0;
+	remainV = v;
+	hour = parseInt(remainV / 3600);
+	remainV %= 3600;
+	minute = parseInt(remainV / 60);
+	remainV %= 60;
+	second = remainV;
+	var cdate = new Date();
+	cdate.setMilliseconds(cdate.getMilliseconds()+v*1000);
+	$("#commandHMS").html(hour+":"+minute+":"+second+
+		"&nbsp;&nbsp;("+ (cdate.getMonth()+1) + "/" +cdate.getDate()+"/"+cdate.getFullYear()+"@"+
+		cdate.getHours()+":"+cdate.getMinutes()+":"+cdate.getSeconds()  +")");
+}
+/* These are events for buttons that add times */
+$("#clear").click(function (){
+	$("#command").val(0);
+	updateDateTimeLabel(new Date());
+});
+$("#update").click(function (){
+	addTimeToCommand(0);
+});
+$("#second5").click(function (){
+	addTimeToCommand(5);
+});
+$("#second30").click(function (){
+	addTimeToCommand(30);
+});
+$("#minute2").click(function(){
+	addTimeToCommand(120);
+});
+$("#minute5").click(function(){
+	addTimeToCommand(300);
+});
+$("#minute20").click(function(){
+	addTimeToCommand(20*60);
+});
+$("#minute30").click(function(){
+	addTimeToCommand(30*60);
+});
+$("#hour1").click(function(){
+	addTimeToCommand(3600);
+});
+$("#hour5").click(function(){
+	addTimeToCommand(3600*5);
+});
+
+</script>
+
+
+</body>
+</html>
