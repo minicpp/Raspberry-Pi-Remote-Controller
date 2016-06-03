@@ -5,3 +5,5 @@ In this personal project, I used Raspberry Pi, a credit card size computer, to s
 A video of a brief introduction:
 
 [![RaspberryPi](https://img.youtube.com/vi/IWdQN7i-sWU/0.jpg)](https://youtu.be/IWdQN7i-sWU)
+
+Notes: This repository does not include third party libraries "wiringPi" and "jQuery". To run the code, you need to download them individually from their official websites.
